@@ -15,7 +15,7 @@ Note: To work, this needs a connected device or a emulated virtual device runnin
 3. In project root directory: `pip install -r requirements.txt`
 4. In project root directory: `python run_sim.py -i targetIP -g path/to/gpx/file.gpx -t emulatorConsoleAuthToken`
 
-## `run\_sym.py`'s parameters
+## `run_sym.py`'s parameters
 
 Below is a list of parameters used by `run\_sym.py` script.
 
