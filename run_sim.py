@@ -12,6 +12,7 @@ import select
 import time
 import threading
 import thread
+import telnetlib
 ### external deps
 try:
     import dateutil.parser
@@ -118,33 +119,13 @@ def walk_track_speed(track, speed, point):
 
 
 def start_geofix(args):
-    s = socket.socket()
-    try:
-        s.connect((args.ip, args.port))
-    except socket.error as ex:
-        print("Error connecting to %s:%s (%s)" % (args.ip, args.port, ex))
-        thread.interrupt_main()
-
-    try:
-        while True:
-            rlist, wlist, _ = select.select([s], [s], [])
-            if s in rlist:
-                x = s.recv(1024)
-                if "KO: password required" in x:
-                    s.close()
-                    print("Password protection is enabled MockGeoFix settings. This is not supported.")
-                    sys.exit(2)
-                if x == '':
-                    s.close()
-                    print("Connection closed.")
-                    thread.interrupt_main()
-            if s in wlist:
-                s.send("geo fix %f %f\r\n" % (curr_lon, curr_lat))
-            time.sleep(UPDATE_INTERVAL)
-    except socket.error as ex:
-        print(ex)
-        thread.interrupt_main()
-
+    tn = telnetlib.Telnet(args.ip, args.port)
+    tn.read_until("OK")
+    tn.write("auth " + args.auth + "\n")
+    tn.read_until("OK")
+    while True:
+        tn.write("geo fix %f %f\r\n" % (curr_lon, curr_lat))
+        time.sleep(UPDATE_INTERVAL)
 
 def start_http_server(args):
     import SimpleHTTPServer
@@ -216,6 +197,8 @@ if __name__ == '__main__':
     args_parser.add_argument("-I", "--listen-ip",
                              help="Run a HTTP server visualizing mocked location on this ip.",
                              required=False)
+    args_parser.add_argument("-t", "--auth", help="Required auth token for telnet authentication",
+                             required=True, type=str)
     args_parser.add_argument("-P", "--listen-port", help="HTTP server's port (default: 80)",
                              required=False, default=80, type=int)
 
